@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+    db:
+        image: mongo:latest
+        container_name: db
+        restart: always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: dashboarduser
+            MONGO_INITDB_ROOT_PASSWORD: dbpassword
+            MONGO_INITDB_DATABASE: dashboarddb
+        ports:
+            - 27017:27017
+        volumes:
+            - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+    #db-setup:
+    #  build: mongodb
+    #  depends_on:
+    #    - mongodb
+
+    api:
+      build: api
+      image: hygieia-api
+      #depends_on:
+      #  - mongodb
+      ports:
+        - "8080:8080"
+    api-audit:
+      build: api-audit
+      image: hygieia-api-audit
+      environment:
+        - MONGO_PORT=tcp://db:27017
+        - MONGODB_HOST=db
+        - HYGIEIA_API_ENV_SPRING_DATA_MONGODB_DATABASE=dashboarddb
+        - HYGIEIA_API_ENV_SPRING_DATA_MONGODB_USERNAME=dashboarduser
+        - HYGIEIA_API_ENV_SPRING_DATA_MONGODB_PASSWORD=dbpassword
+      #depends_on:
+      #  - db
+      ports:
+        - "8081:8080"
+
+    ui:
+      build: UI
+      image: hygieia-ui
+      depends_on:
+        - api
+      ports:
+        - "3000:80"

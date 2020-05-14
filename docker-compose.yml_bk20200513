@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+    mongodb:
+        image: mongo:latest
+        container_name: mongodb
+        restart: always
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: admin
+            MONGO_INITDB_ROOT_PASSWORD: admin
+            MONGO_INITDB_DATABASE: admindb
+        ports:
+            - 27017:27017
+        volumes:
+            - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+    db-setup:
+      build: mongodb
+      depends_on:
+        - mongodb
+
+    api:
+      build: api
+      image: hygieia-api
+      depends_on:
+        - db-setup
+      ports:
+        - "8080:8080"
